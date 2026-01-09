@@ -1,0 +1,7 @@
+{
+  "name": "Roman translator",
+  "description": "A sophisticated language translation app that provides high-quality, expressive text-to-speech in Bengali and English with downloadable audio.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
