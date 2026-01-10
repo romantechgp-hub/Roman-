@@ -29,7 +29,9 @@ export interface HistoryItem {
 export const VOICES: Voice[] = [
   { name: 'Puck', label: 'Puck', description: 'Bright & Playful', gender: 'male' },
   { name: 'Charon', label: 'Charon', description: 'Deep & Authoritative', gender: 'male' },
-  { name: 'Fenrir', label: 'Fenrir', description: 'Warm & Natural', gender: 'male' }
+  { name: 'Fenrir', label: 'Fenrir', description: 'Warm & Natural', gender: 'male' },
+  { name: 'Kore', label: 'Kore', description: 'Clear & Professional', gender: 'female' },
+  { name: 'Zephyr', label: 'Zephyr', description: 'Soft & Friendly', gender: 'female' }
 ];
 
 export interface TranslationState {
@@ -60,7 +62,6 @@ export const LANGUAGES = [
   { code: 'ar', name: 'Arabic' }
 ];
 
-// Basic offline dictionary for common phrases
 export const OFFLINE_DICTIONARY: Record<string, Record<string, string>> = {
   'hello': { 'bn': 'নমস্কার / হ্যালো', 'es': 'Hola', 'fr': 'Bonjour' },
   'thank you': { 'bn': 'ধন্যবাদ', 'es': 'Gracias', 'fr': 'Merci' },

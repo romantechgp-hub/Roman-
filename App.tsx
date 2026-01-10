@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import Header from './components/Header';
-import { Emotion, LANGUAGES, VOICES, TranslationState, HistoryItem, OFFLINE_DICTIONARY, Gender } from './types';
+import { Emotion, LANGUAGES, VOICES, TranslationState, HistoryItem, OFFLINE_DICTIONARY, Gender, Voice } from './types';
 import { translateText, generateExpressiveSpeech } from './services/geminiService';
 import { decodeBase64, createWavBlob, decodeAudioData } from './utils/audioUtils';
 
@@ -34,7 +34,6 @@ const App: React.FC = () => {
   const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
   const recognitionRef = useRef<any>(null);
 
-  // Monitor connectivity & PWA install prompt
   useEffect(() => {
     const handleOnline = () => setState(prev => ({ ...prev, isOnline: true }));
     const handleOffline = () => setState(prev => ({ ...prev, isOnline: false }));
@@ -192,6 +191,15 @@ const App: React.FC = () => {
     }
   };
 
+  const changeGender = (gender: Gender) => {
+    const firstVoice = VOICES.find(v => v.gender === gender);
+    setState(prev => ({
+      ...prev,
+      selectedGender: gender,
+      selectedVoice: firstVoice ? firstVoice.name : prev.selectedVoice
+    }));
+  };
+
   const filteredVoices = VOICES.filter(v => v.gender === state.selectedGender);
 
   return (
@@ -207,7 +215,7 @@ const App: React.FC = () => {
                 <div className="p-2 bg-white/20 rounded-lg">
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </div>
-                <p className="text-sm font-bold">Install Roman Translator on your device</p>
+                <p className="text-sm font-bold">Install Roman Translator</p>
               </div>
               <button onClick={installApp} className="px-4 py-1.5 bg-white text-indigo-600 rounded-xl text-xs font-bold shadow-sm hover:bg-slate-100 transition-colors">Install Now</button>
             </div>
@@ -216,52 +224,52 @@ const App: React.FC = () => {
           {error && <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl text-sm text-red-700 font-medium">{error}</div>}
 
           <div className="flex flex-col md:flex-row items-center gap-4 bg-white p-5 rounded-3xl shadow-sm border border-slate-200">
-            <select value={state.sourceLang} onChange={(e) => setState(prev => ({ ...prev, sourceLang: e.target.value }))} className="flex-1 w-full p-3.5 bg-slate-50 border rounded-2xl font-semibold text-slate-700">
+            <select value={state.sourceLang} onChange={(e) => setState(prev => ({ ...prev, sourceLang: e.target.value }))} className="flex-1 w-full p-3.5 bg-slate-50 border rounded-2xl font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
               {LANGUAGES.map(lang => <option key={lang.code} value={lang.code}>{lang.name}</option>)}
             </select>
             <button onClick={() => setState(prev => ({...prev, sourceLang: prev.targetLang, targetLang: prev.sourceLang, originalText: prev.translatedText, translatedText: prev.originalText}))} className="p-3.5 bg-indigo-50 text-indigo-600 rounded-2xl hover:bg-indigo-100 transition-transform active:rotate-180">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" /></svg>
             </button>
-            <select value={state.targetLang} onChange={(e) => setState(prev => ({ ...prev, targetLang: e.target.value }))} className="flex-1 w-full p-3.5 bg-slate-50 border rounded-2xl font-semibold text-slate-700">
+            <select value={state.targetLang} onChange={(e) => setState(prev => ({ ...prev, targetLang: e.target.value }))} className="flex-1 w-full p-3.5 bg-slate-50 border rounded-2xl font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500">
               {LANGUAGES.map(lang => <option key={lang.code} value={lang.code}>{lang.name}</option>)}
             </select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`bg-white rounded-[2rem] shadow-sm border p-6 min-h-[350px] flex flex-col relative transition-all ${isListening ? 'border-red-400 ring-4 ring-red-50' : 'border-slate-200'}`}>
+            <div className={`bg-white rounded-[2rem] shadow-sm border p-6 min-h-[350px] flex flex-col relative transition-all ${isListening ? 'border-red-400 ring-4 ring-red-50' : 'border-slate-200 focus-within:ring-2 focus-within:ring-indigo-200'}`}>
               <textarea value={state.originalText} onChange={(e) => setState(prev => ({ ...prev, originalText: e.target.value }))} placeholder="Type or speak..." className="flex-grow w-full resize-none border-none outline-none text-xl p-2 leading-relaxed text-slate-800 bg-transparent"/>
-              <button onClick={toggleListening} className={`absolute top-6 right-6 p-4 rounded-2xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-50 text-slate-400 hover:text-indigo-600'}`}>
+              <button onClick={toggleListening} className={`absolute top-6 right-6 p-4 rounded-2xl transition-all ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-50 text-slate-400 hover:text-indigo-600 shadow-sm'}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6"><path d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z"/></svg>
               </button>
               <div className="mt-4 flex justify-between items-center border-t pt-4">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">{state.originalText.length} chars</span>
-                <button onClick={handleTranslate} disabled={state.isTranslating || !state.originalText.trim()} className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg active:scale-95 disabled:opacity-50">
-                  {state.isTranslating ? 'Translating...' : 'Translate'}
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{state.originalText.length} chars</span>
+                <button onClick={handleTranslate} disabled={state.isTranslating || !state.originalText.trim()} className="px-8 py-3 bg-indigo-600 text-white rounded-2xl font-bold shadow-lg active:scale-95 disabled:opacity-50 transition-all">
+                  {state.isTranslating ? 'Working...' : 'Translate'}
                 </button>
               </div>
             </div>
 
             <div className="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-6 min-h-[350px] flex flex-col relative">
-              <div className="flex-grow w-full text-xl p-2 leading-relaxed text-slate-700 overflow-auto">
+              <div className="flex-grow w-full text-xl p-2 leading-relaxed text-slate-700 overflow-auto scroll-smooth">
                 {state.translatedText || <span className="text-slate-300 italic opacity-50">Results will appear here...</span>}
               </div>
               {state.translatedText && (
                 <div className="mt-4 border-t pt-4 space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    <div className="flex bg-slate-100 p-1 rounded-xl">
-                      <button onClick={() => setState(prev => ({ ...prev, selectedGender: 'male' }))} className={`px-4 py-1.5 rounded-lg text-xs font-bold ${state.selectedGender === 'male' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}>Male</button>
-                      <button onClick={() => setState(prev => ({ ...prev, selectedGender: 'female' }))} className={`px-4 py-1.5 rounded-lg text-xs font-bold ${state.selectedGender === 'female' ? 'bg-white text-pink-600 shadow-sm' : 'text-slate-500'}`} disabled>Female</button>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner">
+                      <button onClick={() => changeGender('male')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${state.selectedGender === 'male' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Male</button>
+                      <button onClick={() => changeGender('female')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${state.selectedGender === 'female' ? 'bg-white text-pink-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>Female</button>
                     </div>
-                    <button onClick={() => setState(prev => ({ ...prev, isNewsMode: !prev.isNewsMode }))} className={`px-4 py-2 rounded-xl text-xs font-bold border ${state.isNewsMode ? 'bg-red-600 text-white' : 'bg-white text-slate-600'}`}>News Mode</button>
+                    <button onClick={() => setState(prev => ({ ...prev, isNewsMode: !prev.isNewsMode }))} className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${state.isNewsMode ? 'bg-red-600 text-white border-red-600 shadow-lg' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>News Mode</button>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {filteredVoices.map(v => <button key={v.name} onClick={() => setState(prev => ({ ...prev, selectedVoice: v.name }))} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${state.selectedVoice === v.name ? 'bg-indigo-600 text-white' : 'bg-slate-50'}`}>{v.label}</button>)}
+                    {filteredVoices.map(v => <button key={v.name} onClick={() => setState(prev => ({ ...prev, selectedVoice: v.name }))} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${state.selectedVoice === v.name ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-slate-50 text-slate-600 hover:border-indigo-300'}`}>{v.label}</button>)}
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={handleSpeak} disabled={state.isGeneratingSpeech || !state.isOnline} className={`flex-1 py-4 rounded-2xl font-bold text-white shadow-lg active:scale-95 ${state.isSpeaking ? 'bg-red-500' : 'bg-indigo-600'} disabled:opacity-50`}>
-                      {state.isGeneratingSpeech ? 'Loading...' : state.isSpeaking ? 'Stop' : 'Voiceover'}
+                    <button onClick={handleSpeak} disabled={state.isGeneratingSpeech || !state.isOnline} className={`flex-1 py-4 rounded-2xl font-bold text-white shadow-lg active:scale-95 transition-all ${state.isSpeaking ? 'bg-red-500' : 'bg-indigo-600'} disabled:opacity-50`}>
+                      {state.isGeneratingSpeech ? 'Synthesizing...' : state.isSpeaking ? 'Stop' : 'Voiceover'}
                     </button>
-                    {state.audioUrl && <a href={state.audioUrl} download="translation.wav" className="p-4 bg-slate-100 rounded-2xl text-slate-600 border"><svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12l4.5 4.5m0 0l4.5-4.5M12 3v13.5" strokeWidth="2"/></svg></a>}
+                    {state.audioUrl && <a href={state.audioUrl} download="translation.wav" className="p-4 bg-slate-50 rounded-2xl text-slate-600 border hover:bg-slate-100 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M7.5 12l4.5 4.5m0 0l4.5-4.5M12 3v13.5" strokeWidth="2"/></svg></a>}
                   </div>
                 </div>
               )}
@@ -270,8 +278,8 @@ const App: React.FC = () => {
         </div>
       </main>
 
-      <footer className="bg-white border-t p-8 text-center text-slate-400 text-[10px] font-bold tracking-widest uppercase">
-        <p>&copy; {new Date().getFullYear()} Roman Translator &bull; Pro Broadcast Voice Enabled</p>
+      <footer className="bg-white border-t p-8 text-center text-slate-400 text-[10px] font-bold tracking-widest uppercase mt-auto">
+        <p>&copy; {new Date().getFullYear()} Roman Translator &bull; Built with Gemini AI &bull; PWA Support</p>
       </footer>
     </div>
   );
